@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  python:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    #working_dir: /root
+    #tty: ture
+    #stdin_open: true
+    #command: tail -f /dev/null
+    #volumes:
+    #  - ./src:/root/opt
