@@ -24,6 +24,9 @@ def get_images(doc):
                 img = pdf_file.extract_image(xref)
                 with open(f"./{filename_without_extension}/extracted_image{num_of_pics}.png", "wb") as f:
                     f.write(img["image"])
+            return True
+        else:
+            return False
 
     pdf_file.close()
 
@@ -33,8 +36,6 @@ def main():
     filename = argv[1]
     get_images(filename)
 
-
-    
 if __name__ == "__main__":
     main()
 
