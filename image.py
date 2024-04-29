@@ -22,7 +22,7 @@ def get_images(doc):
                 num_of_pics += 1 
                 xref = image[0]
                 img = pdf_file.extract_image(xref)
-                with open(f"./{filename_without_extension}/extracted_image{num_of_pics}.png", "wb") as f:
+                with open(f"./images/extracted_image{num_of_pics}.png", "wb") as f:
                     f.write(img["image"])
 
     return num_of_pics
