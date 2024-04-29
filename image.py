@@ -24,9 +24,9 @@ def get_images(doc):
                 img = pdf_file.extract_image(xref)
                 with open(f"./{filename_without_extension}/extracted_image{num_of_pics}.png", "wb") as f:
                     f.write(img["image"])
-            return True
-        else:
-            return False
+
+    return num_of_pics
+
 
     pdf_file.close()
 
