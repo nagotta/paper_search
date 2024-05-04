@@ -2,6 +2,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const dropArea = document.getElementById('dropArea');
     const fileList = document.getElementById('fileList');
     const uploadButton = document.getElementById('uploadButton');
+    const editForm = document.getElementById('editForm');
+    const titleInput = document.getElementById('title');
+    const referenceInput = document.getElementById('reference');
+
     let uploadedFiles = [];
 
     dropArea.addEventListener('dragover', (event) => {
@@ -74,12 +78,46 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             console.log('Server response:', data);
             // アップロードが成功した場合の処理を記述
+            showEditForm(data);
         })
         .catch(error => {
             console.error('There was a problem with your fetch operation:', error);
             // アップロードが失敗した場合の処理を記述
         });
     }
+
+    function showEditForm(data) {
+        // サーバーレスポンスのデータをフォームにセット
+        titleInput.value = data.title;
+        referenceInput.value = data.reference;
+
+        // フォームを表示
+        editForm.style.display = 'block';
+
+        // フォームのsubmitボタンがクリックされた時の処理を設定
+        editForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            // フォームのデータを取得してput_item.phpに送信
+            const formData = new FormData(editForm);
+            fetch('put_item.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Network response was not ok.');
+            })
+            .then(data => {
+                console.log('Put item response:', data);
+                // フォームを非表示にするなどの処理を記述
+            })
+            .catch(error => {
+                console.error('There was a problem with your fetch operation:', error);
+                // エラー処理を記述
+            });
+        });
+    }
 });
-
-

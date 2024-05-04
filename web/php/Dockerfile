@@ -10,6 +10,6 @@ RUN apk add --update
 #RUN apt install -y docker.io docker-compose
 RUN apk add docker docker-compose
 RUN apk add sudo
-RUN  delgroup docker
+RUN delgroup docker
 RUN addgroup -g 1001 docker
 RUN adduser www-data docker
