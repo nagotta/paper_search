@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['files'])) {
 	
 	    // ファイルがアップロードされたことを確認し、指定したディレクトリに移動します
         if (!empty($tempFilePath) && move_uploaded_file($tempFilePath, $filePath = $directoryPath . '/' . $fileName)) {
-            $metadatas =  execute_python_script($fileName);
+            $metadatas =  execute_python_script($directoryPath . '/' . $fileName);
             // $metadataInfo = array();
             // 各メタデータをループして処理
             // foreach ($metadatas as $metadata) {
