@@ -41,18 +41,10 @@ def get_references(doc):
     return references
 
 
-
-
-
-
-
 def main():
     argv = sys.argv
-    print("cur : "+os.getcwd())
-    print("argv[0] : "+argv[0])
-    print("argv[1] : "+argv[1])
     # 引数でPDFファイルpath受け取り
-    path = argv[0]
+    path = argv[1]
     document = []
     doc = fitz.open(path)
     references = get_references(doc)

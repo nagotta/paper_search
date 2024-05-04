@@ -28,36 +28,29 @@ http {
     include /etc/nginx/conf.d/*.conf;
 
     server {
+	client_max_body_size 20M;
 	listen 80;
 	root /usr/share/nginx/html;
-	index index.php;
         server_name localhost;
-	error_page 405 =200 $uri;
+#	error_page 405 =200 $uri;
         
 	location / {
-	    error_page 405 =200 $uri;
-            root /usr/share/nginx/html;
-            index index.php;
-	    try_files $uri $uri/ /index.php?$query_string;
-        }
+	    autoindex on;
+	    index          index.php;
+	    try_files $uri $uri/ =404;
+	}
 
 	location ~ [^/]\.php(/|$) {
-	    error_page 405 =200 $uri;
-	    fastcgi_split_path_info ^(.+?\.php)(/.*)$;
-    	    if (!-f $document_root$fastcgi_script_name) {
-            	return 404;
-    	    }
-    	    # https://httpoxy.org/ の脆弱性を緩和する
-    	    fastcgi_param HTTP_PROXY "";
-    	    # TCPソケットを使用してPHP-FPMと通信するための設定
-    	    fastcgi_pass app:9000; 
-    	    # スラッシュで終わるURIの後に追加されるファイル名を設定
-    	    fastcgi_index index.php;
-    	    # fastcgi_paramsファイルに含まれるFastCGIパラメータの設定を読み込む
-    	    include fastcgi_params;
-    	    # SCRIPT_FILENAME パラメータは、PHP-FPM がスクリプト名を決定する際に使用する
-    	    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-  	}
+	    autoindex on;
+	    include        fastcgi_params;
+            # php-sample:9000 の php-sample は php-fpm のコンテナ名を指定している
+            fastcgi_pass   php:9000;
+            fastcgi_index  index.php;
+            fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+ 
+            try_files $uri $uri/ =404;
+	}
+
     }
 }
 

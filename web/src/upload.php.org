@@ -1,16 +1,9 @@
 <?php
-
-// メタデータ抽出のPythonスクリプトを実行する関数のInclude
-include('execute_python_script.php');
-
 // アップロード先のディレクトリを指定します
 $uploadDirectory = '/tmp/';
 
 // レスポンスデータの初期化
 $responseData = array();
-
-// ディレクトリ名に使うタイムスタンプ
-$timestamp = $_SERVER['REQUEST_TIME_FLOAT'];
 
 // POST リクエストがあるかどうかを確認します
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['files'])) {
@@ -21,32 +14,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['files'])) {
     for ($i = 0; $i < $fileCount; $i++) {
         $tempFilePath = $_FILES['files']['tmp_name'][$i];
         $fileName = $_FILES['files']['name'][$i];
-        $fileNameWithoutExtension = pathinfo($fileName, PATHINFO_FILENAME);
-        
-        // アップロードするディレクトリのパスを生成
-        $directoryPath = $uploadDirectory . $timestamp . '/' . $fileNameWithoutExtension;
-        // ディレクトリを作成
-        if (!file_exists($directoryPath)) {
-            mkdir($directoryPath, 0777, true);
-        }
-	
-	    // ファイルがアップロードされたことを確認し、指定したディレクトリに移動します
-        if (!empty($tempFilePath) && move_uploaded_file($tempFilePath, $filePath = $directoryPath . '/' . $fileName)) {
-            $metadatas =  execute_python_script($fileName);
-            // $metadataInfo = array();
-            // 各メタデータをループして処理
-            // foreach ($metadatas as $metadata) {
-            //     // メタデータを文字列に連結して配列に追加
-            //     $metadataInfo[] = implode("\n", $metadata);
-            // }
+
+        // ファイルがアップロードされたことを確認し、指定したディレクトリに移動します
+        if (!empty($tempFilePath) && move_uploaded_file($tempFilePath, $uploadDirectory . $fileName)) {
             // アップロード成功時のレスポンスを追加
             $responseData[] = array(
                 'success' => true,
-                'message' => "File {$fileName} has been uploaded successfully.",
-                'metadataInfo' => $metadatas[0][0]
-		// 'test' => "{$metadatas[0]}"
+                'message' => "File {$fileName} has been uploaded successfully."
             );
-	    // print_r($metadatas);
         } else {
             // アップロード失敗時のレスポンスを追加
             $responseData[] = array(

@@ -1,3 +1,5 @@
+version: '3'
+
 services:
   php:
     restart: always
@@ -6,7 +8,6 @@ services:
       dockerfile: ./php/Dockerfile
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - php-fpm-sock:/var/run/php-fpm
       - meta_data:/tmp
 
   nginx:
@@ -16,27 +17,16 @@ services:
     build:
       context: .
       dockerfile: ./nginx/Dockerfile
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - php-fpm-sock:/var/run/php-fpm
-    depends_on:
-      - php
 
   python3:
     restart: always
     build:
       context: .
-#      args:
-#        - GID
       dockerfile: ./python/Dockerfile
     container_name: python3
     command: tail -f /dev/null
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
       - meta_data:/tmp
-#    group-add:
-#      - ${DOCKER_GID}
-#      - 1001
+
 volumes:
   meta_data:
-  php-fpm-sock:
