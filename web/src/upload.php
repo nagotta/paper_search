@@ -43,7 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['files'])) {
             $responseData[] = array(
                 'success' => true,
                 'message' => "File {$fileName} has been uploaded successfully.",
-                'metadataInfo' => $metadatas[0][0]
+                'title' => $metadatas[0],
+                'reference' => $metadatas[1],
+                'png_num' => $metadatas[2]
 		// 'test' => "{$metadatas[0]}"
             );
 	    // print_r($metadatas);
