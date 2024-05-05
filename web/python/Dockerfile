@@ -1,8 +1,8 @@
 FROM python:3
 # USER root
 WORKDIR /app
-COPY python/src /app
-COPY python/requirements.txt /app
+COPY web/python/src /app
+COPY web/python/requirements.txt /app
 # RUN usermod -aG ${GID} www-data
 RUN pip install --upgrade pip
 RUN pip install --upgrade setuptools

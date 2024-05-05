@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const editForm = document.getElementById('editForm');
     const titleInput = document.getElementById('title');
     const referenceInput = document.getElementById('reference');
+    const submitButton = document.getElementById('submitButton');
 
     let uploadedFiles = [];
 
@@ -76,9 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error('Network response was not ok.');
         })
         .then(data => {
+            showEditForm(data);
             console.log('Server response:', data);
             // アップロードが成功した場合の処理を記述
-            showEditForm(data);
         })
         .catch(error => {
             console.error('There was a problem with your fetch operation:', error);
@@ -93,31 +94,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // フォームを表示
         editForm.style.display = 'block';
-
-        // フォームのsubmitボタンがクリックされた時の処理を設定
-        editForm.addEventListener('submit', (event) => {
-            event.preventDefault();
-
-            // フォームのデータを取得してput_item.phpに送信
-            const formData = new FormData(editForm);
-            fetch('put_item.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                }
-                throw new Error('Network response was not ok.');
-            })
-            .then(data => {
-                console.log('Put item response:', data);
-                // フォームを非表示にするなどの処理を記述
-            })
-            .catch(error => {
-                console.error('There was a problem with your fetch operation:', error);
-                // エラー処理を記述
-            });
-        });
     }
+
+    submitButton.addEventListener('click', () => {
+        // フォームのデータを取得してput_item.phpに送信
+        const formData = new FormData(editForm);
+        fetch('put_item.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok.');
+        })
+        .then(data => {
+            console.log('Put item response:', data);
+            // フォームを非表示にするなどの処理を記述
+            editForm.style.display = 'none';
+        })
+        .catch(error => {
+            console.error('There was a problem with your fetch operation:', error);
+            // エラー処理を記述
+        });
+    });
 });

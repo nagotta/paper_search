@@ -9,7 +9,7 @@ function include_vars() {
     // Login information, baseurl, etc
     // $username, $password, $baseurl
     $vars_file = "user_info.php";
-    $response = include('vars_file');
+    include($vars_file);
 
     if ($response != 1) {
         echo "Error : Couldn't include(${vars_file})\n";
@@ -25,8 +25,8 @@ function include_vars() {
  * 引数：なし
  * 返り値：成功なら1, 失敗なら0でexit
  */
-function include_auth_token() {
-    $response = include("${auth_token_file}");
+function include_auth_token($auth_token_file) {
+    include($auth_token_file);
     if ($response != 1) {
         echo "Error : Couldn't include(${token_file})\n";
         echo "Response is ${response}";
@@ -44,7 +44,9 @@ function include_auth_token() {
 function get_auth_token() {
 
     // 変数の読み込み
-    $response = include_vars();
+    $vars_file = "user_info.php";
+    include($vars_file);
+    
 
     // HTTP request
     // Initialize a CURL sesstion.
@@ -52,11 +54,12 @@ function get_auth_token() {
     // URLの指定
     curl_setopt($ch, CURLOPT_URL, "${baseurl}/api/user/login");
     // HTTPリクエストの指定
-    curl_setopt($ch, CUTLOPT_CUSTOMREQUEST, "POST");
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
     // POSTで通信するデータを設定
-    curl_setopt($ch, CURLOPT_POSTFIELDS, https_build_query(['username' => $username, 'password' => $password]));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['username' => $username, 'password' => $password]));
     // 引数tureでcurl_exec()の実行結果を文字列として取得する
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HEADER, true);
 
     // curlを実行してレスポンスを変数に代入
     $response = curl_exec($ch);
@@ -71,7 +74,8 @@ function get_auth_token() {
         // $token_fileに上書きしてreturn $auth_token
         preg_match("/^Set-Cookie:\s*([^;]*)/mi", $response, $matches);
         $auth_token = $matches[1];
-        file_put_contents("${token_file}", "<?php\n\$auth_token = ${auth_token};\n?>");
+        $auth_token = str_replace('=', '="', $auth_token) . '"';
+        file_put_contents($auth_token_file, "<?php\n\$${auth_token};\n?>");
         return $auth_token;
 
     } else {
@@ -94,96 +98,99 @@ function get_auth_token() {
  *      $tags
  * 返り値：成功なら1, 失敗ならexit(0)
  */
-function put_item($title, $language='jpn'){
+function put_item($putFilePath, $metadata){
 
     // 変数読み込み
-    $response = include_vars();
+    $vars_file = "user_info.php";
+    include($vars_file);
     // ファイルから$auth_token変数の読み込み
-    $response = include_auth_token();
+    include($auth_token_file);
 
-    /**
-     * 機能；ドキュメントの追加
-     * 引数：
-     *      $auth_token：トークン
-     * 返り値：成功ならcurlの実行結果, 失敗ならexit(0)
-     */
-    function put_document($auth_token) {
-        // PUT Document
-        // Initialize a CURL sesstion
-        $ch = curl_init();
-        // URLの指定
-        curl_setopt($ch, CURLOPT_URL, "${baseurl}/api/document");
-        // HTTPリクエストの指定
-        curl_setopt($ch, CUTLOPT_CUSTOMREQUEST, "PUT");
-        // ドキュメント付与するメタデータ
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['title' => $title, 'language' => $language]));
-        // 引数tureでcurl_exec()の実行結果を文字列として取得する
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        // トークンの値を指定
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Cookie: auth_token={$auth_token}"]);
+    // metadata
+    $language='jpn';
+    $title = $metadata[0];
+    $reference = $metadata[1];
 
-        // curlを実行してレスポンスを変数に代入
-        $response = curl_exec($ch);
-        // 実行したcurlリクエストに関する詳細な情報を取得
-        $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    // PUT Document
+    // Initialize a CURL sesstion
+    $ch = curl_init();
+    // URLの指定
+    curl_setopt($ch, CURLOPT_URL, "${baseurl}/api/document");
+    // HTTPリクエストの指定
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+    // ドキュメント付与するメタデータ
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['title' => $title, 'description' => $reference, 'language' => $language]));
+    // 引数tureでcurl_exec()の実行結果を文字列として取得する
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    // トークンの値を指定
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ["Cookie: auth_token={$auth_token}"]);
+    
 
-        // curlセッションの終了
-        curl_close($ch);
+    // curlを実行してレスポンスを変数に代入
+    $response = curl_exec($ch);
+    // 実行したcurlリクエストに関する詳細な情報を取得
+    $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-        // HTTPステータスコードの確認
-        if ($http_status !== 200) {
-            echo "Error : Couldn't PUT Document. HTTP status code is {$http_status}\n";
-            exit(0);
-        } else {
-            echo "Success : HTTP status code is {$http_status}\n";
-            return $response;
-        }
+    // curlセッションの終了
+    curl_close($ch);
+
+    // HTTPステータスコードの確認
+    if ($http_status !== 200) {
+        echo "Error : Couldn't PUT Document. HTTP status code is {$http_status}\n";
+        exit(0);
+    } else {
+        echo "Success : HTTP status code is {$http_status}\n";
     }
-    /**
-     * 機能：ドキュメントにファイルをup
-     * 引数：put_documentメソッドの返り値($response)
-     * 返り値：成功なら1, 失敗ならexit(0)
-     */
-    function put_file_to_document($response) {
-        preg_match('/"id":"([^"]+)"/', $response, $matches);
-        $document_id = $matches[1] ?? "";
-        // PUT file to a Document(only file, not directory)
-        // Initialize a CURL sesstion
-        $ch = curl_init();
-        // URLの指定
-        curl_setopt($ch, CURLOPT_URL, "{$baseurl}/api/document");
-        // HTTPリクエストの指定
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
-        // アップロードするファイルを指定
-        curl_setopt($ch, CURLOPT_POSTFIELDS, ['id' => $document_id, 'file' => new CURLFile($argv[1])]);
-        // 引数tureでcurl_exec()の実行結果を文字列として取得する
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        // トークンの値を指定
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Cookie: auth_token={$auth_token}"]);
 
-        // curlを実行してレスポンスを変数に代入
-        $response = curl_exec($ch);
-        // 実行したcurlリクエストに関する詳細な情報を取得
+    preg_match('/"id":"([^"]+)"/', $response, $matches);
+    $document_id = $matches[1] ?? "";
+    // PUT file to a Document(only file, not directory)
+    // Initialize a CURL sesstion
+    $ch = curl_init();
+    // URLの指定
+    curl_setopt($ch, CURLOPT_URL, "${baseurl}/api/file");
+    // HTTPリクエストの指定
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+    // アップロードするファイルを指定
+    curl_setopt($ch, CURLOPT_POSTFIELDS, ['id' => $document_id, 'file' => new CURLFile("@" . $putFilePath)]);
+    // 引数tureでcurl_exec()の実行結果を文字列として取得する
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    // トークンの値を指定
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ["Cookie: auth_token={$auth_token}"]);
+
+    // curlを実行してレスポンスを変数に代入
+    $response = curl_exec($ch);
+    $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    $max_retries = 10; // 最大再試行回数
+    $retry_interval = 1; // 再試行間隔（秒）
+    $retry_count = 0;
+
+    while ($http_status === 100 && $retry_count < $max_retries) {
+        sleep($retry_interval); // 1秒待機（必要に応じて調整）
+        $retry_count++;
+        // 再度HTTPステータスコードを取得
         $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    }
 
-        // curlセッションの終了
-        curl_close($ch);
+    // curlセッションの終了
+    curl_close($ch);
 
-        // HTTPステータスコードの確認
-        if ($http_status !== 200) {
-            echo "Error : Couldn't PUT File to a ${document_id}(document_id)\n";
-            exit(0);
-        } else {
-            echo "Success : HTTP status code is {$http_status}\n";
-            return 1;
-        }
+    // HTTPステータスコードの確認
+    if ($http_status !== 200) {
+        echo "Error : Couldn't PUT File to a ${document_id}(document_id)\n";
+        echo "${http_status}";
+        exit(0);
+    } else {
+        echo "Success : HTTP status code is {$http_status}\n";
+        return 1;
     }
 
     // ドキュメントの追加
-    $response = put_document();
+    //$response = put_document();
     // 追加したドキュメントにファイルを追加
-    $response = put_file_to_document($response);
-    return $response;
+    //$response = put_file_to_document($response);
+    //return $response;
 }
 
 ?>

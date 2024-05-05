@@ -2,6 +2,7 @@
 
 // メタデータ抽出のPythonスクリプトを実行する関数のInclude
 include('execute_python_script.php');
+include('utils.php');
 
 // アップロード先のディレクトリを指定します
 $uploadDirectory = '/tmp/';
@@ -29,10 +30,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['files'])) {
         if (!file_exists($directoryPath)) {
             mkdir($directoryPath, 0777, true);
         }
-	
+        $putFilePath = $directoryPath . '/' . $fileName;
 	    // ファイルがアップロードされたことを確認し、指定したディレクトリに移動します
-        if (!empty($tempFilePath) && move_uploaded_file($tempFilePath, $filePath = $directoryPath . '/' . $fileName)) {
-            $metadatas =  execute_python_script($directoryPath . '/' . $fileName);
+        if (!empty($tempFilePath) && move_uploaded_file($tempFilePath, $filePath = $putFilePath)) {
+            $metadatas =  execute_python_script($putFilePath);
+            // $response = put_item($putFilePath, $metadatas);
             // $metadataInfo = array();
             // 各メタデータをループして処理
             // foreach ($metadatas as $metadata) {
@@ -46,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['files'])) {
                 'title' => $metadatas[0],
                 'reference' => $metadatas[1],
                 'png_num' => $metadatas[2]
+                //'response' => $response
 		// 'test' => "{$metadatas[0]}"
             );
 	    // print_r($metadatas);
