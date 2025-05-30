@@ -20,7 +20,11 @@ def get_title(doc):
     return "".join(largest_fontsize_texts)
 
 def main():
+    # 引数でPDFファイルpath受け取り
     argv = sys.argv
+    print("cur : "+os.getcwd())
+    print("argv[0] : "+argv[0])
+    print("argv[1] : "+argv[1])
     # 引数でPDFファイルpath受け取り
     path = argv[1]
     document = []

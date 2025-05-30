@@ -1,19 +1,16 @@
 <?php
-
 /**
  * 機能：$vars_fileをincludeする
  * 引数：なし
  * 返り値：成功なら1, 失敗なら0でexit
  */
 function include_vars() {
-    // Login information, baseurl, etc
-    // $username, $password, $baseurl
     $vars_file = "user_info.php";
     include($vars_file);
 
     if ($response != 1) {
-        echo "Error : Couldn't include(${vars_file})\n";
-        echo "Response is ${response}";
+        echo "エラー：${vars_file} の読み込みに失敗しました\n";
+        echo "レスポンス：${response}";
         exit(0);
     } else {
         return 1;
@@ -27,9 +24,10 @@ function include_vars() {
  */
 function include_auth_token($auth_token_file) {
     include($auth_token_file);
+    
     if ($response != 1) {
-        echo "Error : Couldn't include(${token_file})\n";
-        echo "Response is ${response}";
+        echo "エラー：${token_file} の読み込みに失敗しました\n";
+        echo "レスポンス：${response}";
         exit(0);
     } else {
         return 1;
@@ -47,9 +45,7 @@ function get_auth_token() {
     $vars_file = "user_info.php";
     include($vars_file);
     
-
-    // HTTP request
-    // Initialize a CURL sesstion.
+    // curlセッションの初期化
     $ch = curl_init();
     // URLの指定
     curl_setopt($ch, CURLOPT_URL, "${baseurl}/api/user/login");
@@ -57,7 +53,7 @@ function get_auth_token() {
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
     // POSTで通信するデータを設定
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['username' => $username, 'password' => $password]));
-    // 引数tureでcurl_exec()の実行結果を文字列として取得する
+    // 実行結果を文字列として取得
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_HEADER, true);
 
@@ -79,9 +75,9 @@ function get_auth_token() {
         return $auth_token;
 
     } else {
-        // HTTPstatusが200以外の場合
-        echo "Error : Couldn't get auth token\n";
-        echo "HTTP status code is ${http_status}\n";
+        // HTTPステータスが200以外の場合
+        echo "エラー：認証トークンの取得に失敗しました\n";
+        echo "HTTPステータスコード：${http_status}\n";
         return 0;
     }
 }
@@ -106,26 +102,24 @@ function put_item($putFilePath, $metadata){
     // ファイルから$auth_token変数の読み込み
     include($auth_token_file);
 
-    // metadata
+    // メタデータ
     $language='jpn';
     $title = $metadata[0];
     $reference = $metadata[1];
 
-    // PUT Document
-    // Initialize a CURL sesstion
+    // curlセッションの初期化
     $ch = curl_init();
     // URLの指定
     curl_setopt($ch, CURLOPT_URL, "${baseurl}/api/document");
     // HTTPリクエストの指定
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
-    // ドキュメント付与するメタデータ
+    // ドキュメントに付与するメタデータ
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['title' => $title, 'description' => $reference, 'language' => $language]));
-    // 引数tureでcurl_exec()の実行結果を文字列として取得する
+    // 実行結果を文字列として取得
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     // トークンの値を指定
     curl_setopt($ch, CURLOPT_HTTPHEADER, ["Cookie: auth_token={$auth_token}"]);
     
-
     // curlを実行してレスポンスを変数に代入
     $response = curl_exec($ch);
     // 実行したcurlリクエストに関する詳細な情報を取得
@@ -136,16 +130,16 @@ function put_item($putFilePath, $metadata){
 
     // HTTPステータスコードの確認
     if ($http_status !== 200) {
-        echo "Error : Couldn't PUT Document. HTTP status code is {$http_status}\n";
+        echo "エラー：ドキュメントのPUTに失敗しました。HTTPステータスコード：{$http_status}\n";
         exit(0);
     } else {
-        echo "Success : HTTP status code is {$http_status}\n";
+        echo "成功：HTTPステータスコードは {$http_status} です\n";
     }
 
     preg_match('/"id":"([^"]+)"/', $response, $matches);
     $document_id = $matches[1] ?? "";
-    // PUT file to a Document(only file, not directory)
-    // Initialize a CURL sesstion
+    // ドキュメントにファイルをPUT（ファイルのみ、ディレクトリは対象外）
+    // curlセッションの初期化
     $ch = curl_init();
     // URLの指定
     curl_setopt($ch, CURLOPT_URL, "${baseurl}/api/file");
@@ -153,7 +147,7 @@ function put_item($putFilePath, $metadata){
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
     // アップロードするファイルを指定
     curl_setopt($ch, CURLOPT_POSTFIELDS, ['id' => $document_id, 'file' => new CURLFile("@" . $putFilePath)]);
-    // 引数tureでcurl_exec()の実行結果を文字列として取得する
+    // 実行結果を文字列として取得
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     // トークンの値を指定
     curl_setopt($ch, CURLOPT_HTTPHEADER, ["Cookie: auth_token={$auth_token}"]);
@@ -178,11 +172,11 @@ function put_item($putFilePath, $metadata){
 
     // HTTPステータスコードの確認
     if ($http_status !== 200) {
-        echo "Error : Couldn't PUT File to a ${document_id}(document_id)\n";
-        echo "${http_status}";
+        echo "エラー：${document_id}（document_id）へのファイルPUTに失敗しました\n";
+        echo "HTTPステータスコード：${http_status}\n";
         exit(0);
     } else {
-        echo "Success : HTTP status code is {$http_status}\n";
+        echo "成功：HTTPステータスコードは {$http_status} です\n";
         return 1;
     }
 

@@ -1,47 +1,49 @@
 #!/bin/bash
+#
+# Teedyサーバーにアイテム（文書など）を登録するスクリプト
+#
 
-# Login Information(unsecure)
-username=admin
-password=superSecure
-baseurl=http://localhost:8081
-auth_token=d28ca6c8-9dda-47b8-94a3-3d98c6abf63e
+set -e  # コマンドが失敗した時点でスクリプトを終了
 
-# metadata(extracted from PDF)
-title=
+# 環境変数を読み込む
+source "$(dirname "$0")/common.sh"
+load_env
+
+# PDFから抽出したメタデータ
+title=""
 #etc1
 #etc2
 #...
 language=jpn
 
-
-# PUT Document
+# ドキュメントをPUT（新規作成）
 response=$(curl -i -X PUT -H "Cookie: auth_token=${auth_token}" -d "title=${title}&language=${language}" "${baseurl}/api/document")
 
-# Check HTTP_status_code
+# HTTPステータスコードを取得
 http_status=$(echo "$response" | grep -i "HTTP/" | awk '{print $2}')
 
-# if http_status is not 200 -> retry once
+# HTTPステータスコードが200でない場合は1回だけ再試行
 if [ "$http_status" -ne 200 ]; then
-	auth_token=$(./get_auth_token.sh)
-	response=$(curl -i -X PUT -H "Cookie: auth_token=${auth_token}" -d "title=${title}&language=${language}" "${baseurl}/api/document")
-	# Check HTTP_status_code
-	http_status=$(echo "$response" | grep -i "HTTP/" | awk '{print $2}')
-	if [ "$http_status" -ne 200 ]; then
-		echo "Error : Couldn't PUT Document. HTTP status code is ${http_status}"
-		exit 1
-	fi
+    auth_token=$(./get_auth_token.sh)
+    response=$(curl -i -X PUT -H "Cookie: auth_token=${auth_token}" -d "title=${title}&language=${language}" "${TEEDYBASEURL}/api/document")
+    # 再度HTTPステータスコードを確認
+    http_status=$(echo "$response" | grep -i "HTTP/" | awk '{print $2}')
+    if [ "$http_status" -ne 200 ]; then
+        echo "エラー: ドキュメントのPUTに失敗しました。HTTPステータスコード: ${http_status}"
+        exit 1
+    fi
 fi
 
-# Extracting DocumentID
+# ドキュメントIDを抽出
 document_id=$(echo "$response" | grep -o '"id":"[^"]*' | sed 's/"id":"//')
 
-# PUT File to a Document(only file, not directory)
+# ファイルをドキュメントにPUT（ファイルのみ、ディレクトリは対象外）
 response=$(curl -i -X PUT -H "Cookie: auth_token=${auth_token}" -F "id=${document_id}" -F "file=@$1")
 
-# Check HTTP_status_code
+# HTTPステータスコードを再度確認
 http_status=$(echo "$response" | grep -i "HTTP/" | awk '{print $2}')
 if [ "$http_status" -ne 200 ]; then
-	echo "Error : Couldn't PUT $1 to a ${document_id}"
+    echo "エラー: ${document_id} への $1 のPUTに失敗しました"
 fi
-# Directory will be run recursively.
 
+# ディレクトリの場合は再帰的に処理されます（未実装）
