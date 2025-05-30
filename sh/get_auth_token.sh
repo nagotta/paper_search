@@ -1,33 +1,38 @@
 #!/bin/bash
+#
+# Teedyサーバーから認証トークンを取得し，auth_token.txtに保存するスクリプト
+#
 
-# Login Information(unsecure)
-username=admin
-password=superSecure
-baseurl=http://localhost:8081
-auth_token=d28ca6c8-9dda-47b8-94a3-3d98c6abf63e
+set -e  # コマンドが失敗した時点でスクリプトを終了
 
+auth_token_file="../auth_token.txt"  # トークンを保存するファイルのパス
 
+# 環境変数を読み込む
+source "$(dirname "$0")/common.sh"
+load_env
 
-# HTTPrequest
-response=$(curl -i -X POST -d username=${username} -d password=${password} "${baseurl}/api/user/login" 2>/dev/null)
+# Teedyから認証トークンを取得
+response=$(curl -i -s -X POST -d "username=${TEEDYUSERNAME}" -d "password=${TEEDYPASSWORD}" "${TEEDYBASEURL}/api/user/login")
 
-if [ "$?" -eq 0 ]; then
-    # Get HTTP_status_code
-    http_status=$(echo "$response" | head -n 1 | cut -d' ' -f2)
+# HTTPステータスコードを取得
+http_status=$(echo "$response" | head -n 1 | awk '{print $2}')
+
+# リクエストの成否を確認
+if [ -z "$http_status" ]; then  # 変数の要素が空の場合にTRUE
+    echo "HTTPステータスコードが取得できませんでした" >&2  # 標準エラー出力
+    exit 1
+elif [ "$http_status" -eq 200 ]; then
+    echo "リクエストは成功しました。HTTPステータスコード: $http_status"
+    auth_token=$(echo "$response" | grep -i "^Set-Cookie:" | awk -F'[=;]' '{print $2}')
+    # 認証トークンをファイル二書き込み
+    echo "$auth_token" > $auth_token_file
+    if [ -n "$auth_token" ]; then  # 変数の要素が空でない場合にTRUE
+        echo "認証トークンが取得されました: $auth_token"
+    else
+        echo "認証トークンが取得できませんでした" >&2  # 標準エラー出力
+        exit 1
+    fi
 else
-    # echo "Request failed"
+    echo "リクエストが失敗しました。HTTPステータスコード: $http_status" >&2  # 標準エラー出力
     exit 1
 fi
-
-# if HTTP_status_code is 200 -> get auth_token
-if [ "$http_status" -eq 200 ]; then
-    auth_token=$(echo "$response" | grep -i "^Set-Cookie:" | cut -d'=' -f2 | cut -d';' -f1)
-    echo "$auth_token"
-else
-    # echo "Request failed with status code: $http_status"
-    exit 1
-fi
-
-
-
-

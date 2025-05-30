@@ -1,13 +1,16 @@
 #!/bin/bash
+#
+# Teedyサーバーにアイテム（文書など）を登録するスクリプト
+#
 
-# Login Information(unsecure)
-username=admin
-password=superSecure
-baseurl=http://localhost:8081
-auth_token=d28ca6c8-9dda-47b8-94a3-3d98c6abf63e
+set -e  # コマンドが失敗した時点でスクリプトを終了
+
+# 環境変数を読み込む
+source "$(dirname "$0")/common.sh"
+load_env
 
 # metadata(extracted from PDF)
-title=
+title=""
 #etc1
 #etc2
 #...
@@ -23,7 +26,7 @@ http_status=$(echo "$response" | grep -i "HTTP/" | awk '{print $2}')
 # if http_status is not 200 -> retry once
 if [ "$http_status" -ne 200 ]; then
 	auth_token=$(./get_auth_token.sh)
-	response=$(curl -i -X PUT -H "Cookie: auth_token=${auth_token}" -d "title=${title}&language=${language}" "${baseurl}/api/document")
+	response=$(curl -i -X PUT -H "Cookie: auth_token=${auth_token}" -d "title=${title}&language=${language}" "${TEEDYBASEURL}/api/document")
 	# Check HTTP_status_code
 	http_status=$(echo "$response" | grep -i "HTTP/" | awk '{print $2}')
 	if [ "$http_status" -ne 200 ]; then
