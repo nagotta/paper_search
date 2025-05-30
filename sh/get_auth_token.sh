@@ -14,7 +14,6 @@ load_env
 # Teedyから認証トークンを取得
 response=$(curl -i -s -X POST -d "username=${TEEDYUSERNAME}" -d "password=${TEEDYPASSWORD}" "${TEEDYBASEURL}/api/user/login")
 
-# HTTPステータスコードを取得
 http_status=$(echo "$response" | head -n 1 | awk '{print $2}')
 
 # リクエストの成否を確認

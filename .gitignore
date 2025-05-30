@@ -1,2 +1,5 @@
 teedy/docs/
 .env
+auth_token.txt
+tmp/
+*.log

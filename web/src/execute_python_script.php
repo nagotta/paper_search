@@ -1,6 +1,6 @@
 <?php
 
-function execute_python_script($pdfFilePath){
+function execute_python_script($pdfFileName){
 
     // 実行するPythonスクリプトのファイル名を指定
     $scriptNames = array("title.py", "references.py", "image.py");
@@ -11,7 +11,8 @@ function execute_python_script($pdfFilePath){
     // $scriptNames 配列の各要素に対してループ処理を行う
     foreach ($scriptNames as $scriptName) {
         // Dockerコマンドの生成
-	$command = "docker exec python3 python3 {$scriptName} {$pdfFilePath}";
+	$command = "docker exec -it python3 python3 {$scriptName} {$pdfFileName}";
+	
         // コマンドを実行し、結果を $responses 配列に追加
         exec($command, $response);
 	$response = implode($response);

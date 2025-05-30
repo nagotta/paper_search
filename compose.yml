@@ -1,54 +1,45 @@
-version: '3'
-
 services:
+  # Teedyアプリケーション本体
   teedy-server:
-    # Teedy Application
     image: sismics/docs:v1.11
     restart: unless-stopped
     ports:
-      # Map internal port to host
-      - 8081:8080
+      - 8081:8080  # ホストの8081番ポートをコンテナの8080番ポートにマッピング
     environment:
-      # Base url to be used
-      DOCS_BASE_URL: "https://docs.example.com"
-      # Set the admin email
-      DOCS_ADMIN_EMAIL_INIT: "admin@example.com"
-      # Set the admin password (in this example: "superSecure")
-      DOCS_ADMIN_PASSWORD_INIT: "$$2a$$05$$PcMNUbJvsk7QHFSfEIDaIOjk1VI9/E7IPjTKx.jkjPxkx2EOKSoPS"
-      # Setup the database connection. "teedy-db" is the hostname
-      # and "teedy" is the name of the database the application
-      # will connect to.
-      DATABASE_URL: "jdbc:postgresql://teedy-db:5432/teedy"
-      DATABASE_USER: "teedy_db_user"
-      DATABASE_PASSWORD: "teedy_db_password"
-      DATABASE_POOL_SIZE: "10"
+      DOCS_BASE_URL: "${DOCS_BASE_URL}"  # TeedyのベースURL
+      DOCS_ADMIN_EMAIL_INIT: "${DOCS_ADMIN_EMAIL_INIT}"  # 管理者メールアドレス
+      DOCS_ADMIN_PASSWORD_INIT: "${DOCS_ADMIN_PASSWORD_INIT}"  # 管理者パスワード（例: "superSecure" のハッシュ値）
+      DATABASE_URL: "${DATABASE_URL}"  # データベース接続設定
+      DATABASE_USER: "${DATABASE_USER}"
+      DATABASE_PASSWORD: "${DATABASE_PASSWORD}"
+      DATABASE_POOL_SIZE: "${DATABASE_POOL_SIZE}"
     container_name: teedy-server
-    volumes:
+    volumes:  # Teedyのデータを永続化
       - ./teedy/docs/data:/data
     networks:
       - docker-internal
       - internet
-    depends_on:
+    depends_on:  # DBサービス起動後にTeedyを起動
       - teedy-db
 
+  # Teedy用PostgreSQLデータベース
   teedy-db:
-    # DB for Teedy
     image: postgres:13.1-alpine
     restart: unless-stopped
     expose:
-      - 5432
+      - 5432  # コンテナ間通信用に5432番ポートを公開
     environment:
-      POSTGRES_USER: "teedy_db_user"
-      POSTGRES_PASSWORD: "teedy_db_password"
-      POSTGRES_DB: "teedy"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${POSTGRES_DB}"
     container_name: teedy-db
     volumes:
-      - ./teedy/docs/db:/var/lib/postgresql/data
+      - ./teedy/docs/db:/var/lib/postgresql/data  # DBデータを永続化
     networks:
       - docker-internal
 
+  # PHPサービス
   php:
-    # PHP service
     restart: always
     build:
       context: .
@@ -62,11 +53,11 @@ services:
       - docker-internal
       - internet
 
+  # NGINXサービス
   nginx:
-    # NGINX service
     restart: always
     ports:
-      - 8008:80
+      - 8008:80  # ホストの8008番ポートをコンテナの80番ポートにマッピング
     build:
       context: .
       dockerfile: ./web/nginx/Dockerfile
@@ -74,13 +65,13 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - php-fpm-sock:/var/run/php-fpm
-    depends_on:
+    depends_on:  # PHPサービス起動後にNGINXを起動
       - php
     networks:
       - internet
 
+  # Pythonサービス
   python3:
-    # Python service
     restart: always
     build:
       context: .
@@ -94,16 +85,15 @@ services:
       - docker-internal
       - internet
 
+# DB用の内部ネットワーク（外部アクセス不可）
 networks:
-  # Network without internet access. The db does not need
-  # access to the host network.
   docker-internal:
     driver: bridge
     internal: true
+  # 外部アクセス可能なネットワーク
   internet:
     driver: bridge
 
 volumes:
   meta_data:
   php-fpm-sock:
-
